@@ -1,0 +1,12 @@
+name             'multi-server'
+maintainer       'ADAM_NETTLES'
+maintainer_email 'ANETTLES@GMAIL.COM'
+license          'All rights reserved'
+description      'Installs/Configures tomcat8'
+long_description 'Installs/Configures tomcat8'
+version          '0.1.0'
+
+depends 'java', '~> 1.39.0'
+depends 'postgresql', '~> 4.0.0'
+depends 'tar', '~> 0.7.0'
+depends 'chef-vault', '~> 1.3.2'
