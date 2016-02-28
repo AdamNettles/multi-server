@@ -1,0 +1,4 @@
+CREATE TABLE test.test (coltest varchar(20));
+insert into test.test (coltest) values ('It works!');
+SELECT * from test.test;
+DROP TABLE test.test;

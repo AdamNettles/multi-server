@@ -13,6 +13,7 @@ platforms:
       #box: https://opscode-vm-bento.s3.amazonaws.com/vagrant/virtualbox/opscode_centos-7.1_chef-provisionerless.box
       network:
         - ["forwarded_port", {guest: 8080, host: 8081}]
+        - ["forwarded_port", {guest: 5432, host: 55432}]
 
 suites:
   - name: centos-71

@@ -2,6 +2,7 @@
 as root >> yum localinstall http://yum.postgresql.org/9.4/redhat/rhel-6-x86_64/pgdg-centos94-9.4-1.noarch.rpm
 as root >> yum install postgresql94-server postgresql94-contrib
 sudo /usr/pgsql-9.4/bin/postgresql94-setup initdb
+# this command fails /usr/pgsql-9.4/bin/postgresql94-setup initdb postgresql
 ## cookbook issue:  doesn't use full path
 sudo chkconfig postgresql-9.4 on
 # as of centos 7.1+ they recommend using systemctl enable postgresql-9.4.service instead
@@ -11,23 +12,39 @@ sudo service postgresql-9.4 restart
 # now set up the database #
 sudo su
 su - postgres
+CREATE SCHEMA adam_schema AUTHORIZATION adam;
+# Note:  obviously don't use that password...
 CREATE USER adam PASSWORD 'somepass';
-GRANT ALL ON SCHEMA test TO adam;
-GRANT ALL ON ALL TABLES IN SCHEMA test TO adam;
+GRANT ALL ON SCHEMA adam_schema TO adam;
+GRANT ALL ON ALL TABLES IN SCHEMA adam_schema TO adam;
+
+#CREATE SCHEMA adam_schema AUTHORIZATION adam
+#    CREATE TABLE films (title text, release date, awards text[])
+#    CREATE VIEW winners AS
+#        SELECT title, release FROM films WHERE awards IS NOT NULL;
 
 # modified all pg_hba to md5
-sudo service postgresql-9.4 restart
+as root >> sudo service postgresql-9.4 restart
 psql -U adam -d postgres
 # password authenticated local connection works
 
 ## TEST the DDL ##
-CREATE TABLE test.test (coltest varchar(20));
-insert into test.test (coltest) values ('It works!');
-SELECT * from test.test;
-DROP TABLE test.test;
+CREATE TABLE adam_schema.test_table (
+ident_col BIGSERIAL PRIMARY KEY,
+text_col varchar(20),
+crte_ts timestamp with time zone default current_timestamp);
+insert into adam_schema.test_table (identCol,textCol) values (1,'First Row');
+insert into adam_schema.test_table (identCol,textCol) values (2,'Second Row');
+SELECT * from adam_schema.test_table;
+DROP TABLE adam_schema.test_table;
 
 ### Reference material ###
 # Data is here
 /var/lib/pgsql/9.4/data
 # binaries are here
 /usr/pgsql-9.4/bin
+
+Protecting columns from accidental change by non-superusers
+can be done through schema permissions
+topic is a table or view (or schema???), public is a user or role
+grant select(id, dependency1, dependency2), update(id) on topic to public;

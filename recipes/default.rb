@@ -26,6 +26,15 @@ else
   postgresql_creds = Chef::DataBagItem.load("multi_server", "postgresql")
 end
 
+# Copy a JDK tarball from cookbook to Node
+# TODO:  Create custom cookbook to install java from local file
+# cookbook_file '/var/jtreg-4.1-b12-496.tar.gz' do
+#   source 'jtreg-4.1-b12-496.tar.gz'
+#   owner 'root'
+#   mode '0755'
+#   action :create
+# end
+
 include_recipe 'java'
 
 # locally cached tomcat8 tar @ /Users/adamnettles/chef/resources/apache-tomcat-8.0.30.tar
@@ -44,6 +53,39 @@ directory '/opt/tomcat' do
 	group 'tomcat'
 	owner 'tomcat_usr'
 	action :create
+end
+
+#Set up the deploy and deployer_usr with public key
+user 'deployer_usr' do
+	group 'tomcat'
+	home '/opt/deployer_usr'
+	shell '/bin/bash'
+end
+
+ssh_authorize_key 'deployer_public_key' do
+  key tomcat_creds['deployerPublicKey']
+  user 'deployer_usr'
+  group 'tomcat'
+  # options inser directly into the pub key on node, not using them
+end
+
+# Make deployer_usr a sudoer, see attributes
+include_recipe 'sudo'
+
+# If detailed restrictions needed, use this LWRP to setup sudoers instead
+# Note, needs modification to work
+# sudo 'tomcat' do
+#   user      "%deployer_usr"    # or a username
+#   runas     'app_user'   # or 'app_user:tomcat'
+#   commands  ['/etc/init.d/tomcat restart']
+# end
+
+service 'sshd' do
+	action :enable
+end
+
+service 'sshd' do
+	action :restart
 end
 
 node.default['tom-version'] = '8.0.32'
@@ -90,7 +132,14 @@ node.default['tom-owned-dirs'] = ['webapps','work','temp','logs']
 node['tom-owned-dirs'].each do |dir|
 	directory "#{node['tom-install-path']}/#{dir}" do
 		owner 'tomcat_usr'
+		group 'tomcat'
+		mode '0770'
 	end
+end
+
+# Grant rwx on this to allow deployer_usr access through tomcat group
+directory node['tom-install-path'] do
+	mode '0770'
 end
 
 template '/etc/systemd/system/tomcat.service' do
@@ -124,11 +173,25 @@ service 'tomcat' do
 	action :start
 end
 
+### Create Login user for deployment ###
+### Then, install pub under that user ###
+
+
+puts node['postgresql']['server']['service_name']
+
 ### Begin Postgres ###
 include_recipe 'postgresql::server'
 ## Contrib included automatically by attribute flags ##
 
-# include_recipe 'postgresql::client'
+# Execute the DDL
 
+
+# Make sure the PGDATA env variable is set
+# bash 'setPGDATA' do
+#   code "export PGDATA = #{node['postgresql']['dir']}"
+#   action :run
+# end
+
+# 
 #include_recipe 'postgresql::config_initdb'
 #include_recipe 'postgresql::config_pgtune'

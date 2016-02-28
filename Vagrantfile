@@ -88,9 +88,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   #  ]
   #end
 
-  config.vm.provision :chef_solo do |chef|
+   config.vm.provision :chef_solo do |chef|
   # other stuff... like: chef.add_recipe "postgresql::server"
-  chef.json = {
+   chef.json = {
     "postgresql" => {
       "password" => {
         "postgres" => "232a17a9e1f6cfe8add398bc356a61e7"
